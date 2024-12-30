@@ -1,0 +1,49 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const App = () => {
+    const [products, setProducts] = useState([]);
+    const [token, setToken] = useState(localStorage.getItem('token') || '');
+    const [paymentStatus, setPaymentStatus] = useState('');
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            const response = await axios.get('http://localhost:5000/api/products');
+            setProducts(response.data);
+        };
+        fetchProducts();
+    }, []);
+
+    const handlePayment = async (product) => {
+        try {
+            const paymentResponse = await axios.post('http://localhost:5000/api/payment', {
+                amount: product.price * 100, // Convert to cents
+                token: 'your-stripe-token',
+            }, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setPaymentStatus('Payment Successful');
+        } catch (error) {
+            setPaymentStatus('Payment Failed: ' + error.response.data.error);
+        }
+    };
+
+    return (
+        <div>
+            <h1>E-commerce Platform</h1>
+            <div>
+                {products.map((product) => (
+                    <div key={product._id}>
+                        <h3>{product.name}</h3>
+                        <p>{product.description}</p>
+                        <p>${product.price}</p>
+                        <button onClick={() => handlePayment(product)}>Buy</button>
+                    </div>
+                ))}
+            </div>
+            <p>{paymentStatus}</p>
+        </div>
+    );
+};
+
+export default App;
